@@ -3,7 +3,11 @@ package com.chachadev.heathinfoapp.presentation.common.navigation
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
+import androidx.navigation.toRoute
+import com.chachadev.heathinfoapp.data.network.reponses.PatientResponse
 import com.chachadev.heathinfoapp.presentation.dashboard.DashboardScreen
+import com.chachadev.heathinfoapp.presentation.enrollClient.EnrollPatientScreen
+import com.chachadev.heathinfoapp.presentation.patientDetails.PatientDetailsScreen
 
 fun NavGraphBuilder.appNavigation(
     onNavigate: (Destination, Boolean) -> Unit,
@@ -16,18 +20,18 @@ fun NavGraphBuilder.appNavigation(
                 onNavigate = onNavigate
             )
         }
-//        composable<Destination.App.SendMoney> {
-//            SendMoneyMainScreen(
-//                onNavigateToSendMoneyDetail = {},
-//                onGoBack = onGoBack
-//            )
-//        }
-//        composable<Destination.App.Loans> {
-//            LoanScreen(
-//                navigateToLoanMiniStatement = {},
-//                onGoBack = onGoBack
-//            )
-//        }
+        composable<Destination.App.PatientDetailsRoute> { backStackEntry ->
+            val patientId = backStackEntry.toRoute<Destination.App.PatientDetailsRoute>()
+            PatientDetailsScreen(
+                patientId = patientId.id,
+            )
+        }
+        composable<Destination.App.PatientEnrollment> {
+            EnrollPatientScreen(
+                onBackClick =  {},
+                onEnrollmentSuccess =  {}
+            )
+        }
 //        composable<Destination.App.LoanStatement> {
 //            LoanMiniStatementScreen()
 //        }

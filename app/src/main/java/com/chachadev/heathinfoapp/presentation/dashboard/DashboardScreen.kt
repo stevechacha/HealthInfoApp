@@ -1,5 +1,7 @@
 package com.chachadev.heathinfoapp.presentation.dashboard
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -14,14 +16,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.chachadev.heathinfoapp.presentation.clientProgram.CreateProgramScreen
-import com.chachadev.heathinfoapp.presentation.clientRegistration.ClientRegistrationScreen
-import com.chachadev.heathinfoapp.presentation.client_list.ClientListScreen
 import com.chachadev.heathinfoapp.presentation.common.bottomBar.StandardScaffold
 import com.chachadev.heathinfoapp.presentation.common.composables.remember.rememberSnackBarState
 import com.chachadev.heathinfoapp.presentation.common.navigation.Destination
+import com.chachadev.heathinfoapp.presentation.enrollClient.EnrollPatientScreen
+import com.chachadev.heathinfoapp.presentation.patient.PatientScreen
+import com.chachadev.heathinfoapp.presentation.patientList.PatientsListScreen
 import kotlinx.coroutines.launch
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DashboardScreen(
     onNavigate: (Destination, Boolean) -> Unit,
@@ -58,47 +62,38 @@ fun DashboardScreen(
         isLoggedIn = true,
         snackBarHostState = snackBarHostState
     ) {
-        NavHost(navigator, startDestination = Destination.App.DashBoard.Home) {
-            composable<Destination.App.DashBoard.Home> {
-                CreateProgramScreen()
-//                HomeScreen(
-//                    onNavigate = onNavigate
-//                )
+        NavHost(navigator, startDestination = Destination.App.DashBoard.Patients) {
+            composable<Destination.App.DashBoard.Patients> {
+                PatientsListScreen(
+                    onPatientClick = { patientId->
+                        onNavigate(
+                            Destination.App.PatientDetailsRoute(patientId),
+                            false
+                        )
+                    }
+                )
             }
-            composable<Destination.App.DashBoard.Transact> {
-
-                ClientRegistrationScreen()
-
-            }
-
-            composable<Destination.App.DashBoard.Discover> {
-                ClientListScreen()
+            composable<Destination.App.DashBoard.Programs> {
+                ProgramsListScreen()
             }
 
-            composable<Destination.App.DashBoard.Account> {
-                AccountScreen(
-                    onNavigate = onNavigate,
-                    onGoBack = {},
+            composable<Destination.App.DashBoard.Enrollment> {
+                EnrollPatientScreen(
+                    onBackClick = {},
+                    onEnrollmentSuccess = {}
+                )
+            }
+
+            composable<Destination.App.DashBoard.Profile> {
+                EnrollPatientScreen(
+                    onBackClick = {},
+                    onEnrollmentSuccess = {}
                 )
             }
         }
     }
 }
 
-@Composable
-fun HomeScreen(onNavigate: (Destination, Boolean) -> Unit) {
-
-
-}
-
-@Composable
-fun NewTransactionScreen(onNavigate: (Destination, Boolean) -> Unit, onNavigateBack: () -> Unit) {
-
-}
-
-@Composable
-fun DiscoverScreen(onNavigate: (Destination, Boolean) -> Unit, onNavigateBack: () -> Unit) {
-}
 
 @Composable
 fun AccountScreen(onNavigate: (Destination, Boolean) -> Unit, onGoBack: () -> Unit) {

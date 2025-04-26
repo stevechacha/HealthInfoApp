@@ -1,4 +1,4 @@
-package com.chachadev.heathinfoapp.presentation.clientProfile
+package com.chachadev.heathinfoapp.presentation.patientProfile
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -19,18 +19,18 @@ fun ClientProfileScreen(
     clientId: Int,
     viewModel: CreateProgramViewModel = koinViewModel()
 ) {
-    val profile by viewModel.getClientProfile(clientId).collectAsState()
-
-    profile?.let {
-        Column(Modifier.padding(16.dp)) {
-            Text("Name: ${it.client.name}")
-            Text("Age: ${it.client.age}")
-            Text("Gender: ${it.client.gender}")
-            Spacer(Modifier.height(8.dp))
-            Text("Enrolled Programs:", style = MaterialTheme.typography.titleSmall)
-            it.programs.forEach { program ->
-                Text("- ${program.name}")
-            }
-        }
-    }
+//    val profile by viewModel.getClientProfile(clientId).collectAsState()
+//
+//    profile?.let {
+//        Column(Modifier.padding(16.dp)) {
+//            Text("Name: ${it.client.name}")
+//            Text("Age: ${it.client.age}")
+//            Text("Gender: ${it.client.gender}")
+//            Spacer(Modifier.height(8.dp))
+//            Text("Enrolled Programs:", style = MaterialTheme.typography.titleSmall)
+//            it.programs.forEach { program ->
+//                Text("- ${program.name}")
+//            }
+//        }
+//    }
 }

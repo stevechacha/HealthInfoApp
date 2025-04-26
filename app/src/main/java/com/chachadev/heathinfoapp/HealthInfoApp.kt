@@ -2,7 +2,6 @@ package com.chachadev.heathinfoapp
 
 import android.app.Application
 import com.chachadev.heathinfoapp.di.apiModule
-import com.chachadev.heathinfoapp.di.appModule
 import com.chachadev.heathinfoapp.di.databaseModule
 import com.chachadev.heathinfoapp.di.environmentModule
 import com.chachadev.heathinfoapp.di.networkModule
@@ -31,7 +30,8 @@ class HealthInfoApp : Application() {
                 databaseModule,
                 environmentModule,
                 repoModule,
-                screenViewModelModule
+                screenViewModelModule,
+                apiModule
             )
         }
     }

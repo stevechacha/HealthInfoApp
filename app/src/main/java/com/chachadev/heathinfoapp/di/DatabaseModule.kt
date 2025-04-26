@@ -1,7 +1,7 @@
 package com.chachadev.heathinfoapp.di
 
 import androidx.room.Room
-import com.chachadev.heathinfoapp.data.local.AppDatabase
+import com.chachadev.heathinfoapp.data.local.HealthcareDatabase
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -11,12 +11,16 @@ val databaseModule = module {
     single {
         Room.databaseBuilder(
             androidContext(),
-            AppDatabase::class.java,
+            HealthcareDatabase::class.java,
             "health-info-db"
         ).build()
     }
 
-    // Provide DAOs
-    single { get<AppDatabase>().clientDao() }
-    single { get<AppDatabase>().programDao() }
+    // Database
+    single { HealthcareDatabase.getDatabase(androidContext()) }
+
+    // DAOs
+    single { get<HealthcareDatabase>().patientDao() }
+    single { get<HealthcareDatabase>().programDao() }
+    single { get<HealthcareDatabase>().enrollmentDao() }
 }

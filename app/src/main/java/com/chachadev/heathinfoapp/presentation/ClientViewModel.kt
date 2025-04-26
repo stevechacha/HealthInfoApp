@@ -2,18 +2,12 @@ package com.chachadev.heathinfoapp.presentation
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
-import com.chachadev.heathinfoapp.data.local.entity.HealthProgramEntity
-import com.chachadev.heathinfoapp.data.repo.ClientRepository
-import com.chachadev.heathinfoapp.presentation.client_list.Client
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 
 class ClientViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val _clients = MutableStateFlow<List<Client>>(emptyList())
-    val clients: StateFlow<List<Client>> = _clients
+
 
 //    private val repository: ClientRepository = ClientRepository()
 //

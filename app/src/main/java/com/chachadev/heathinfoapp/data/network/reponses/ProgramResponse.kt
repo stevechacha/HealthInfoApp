@@ -1,9 +1,24 @@
 package com.chachadev.heathinfoapp.data.network.reponses
 
+
+
 data class ProgramResponse(
-    val id: Int,
+    val program_id: String,
     val name: String,
-    val age: Int,
-    val gender: String,
-    val programs: List<HealthProgramResponse>
+    val program_type: ProgramType,
+    val target_age_group: String?,
+    val risk_factors: List<String>,
+    val created_at: String
 )
+
+
+enum class ProgramType {
+    chronic, infectious, preventive, rehabilitation
+}
+
+//enum class ProgramType {
+//    CHRONIC,
+//    INFECTIOUS,
+//    PREVENTIVE,
+//    REHABILITATION
+//}
