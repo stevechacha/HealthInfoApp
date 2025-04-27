@@ -38,6 +38,17 @@ A modern Android application for managing patients, healthcare programs, and enr
   <img src="Scrrenshot/Screenshot%202025-04-27%20at%2017.41.46.png" width="45%">
 </div>
 
+## System Architecture
+
+```mermaid
+graph TD
+    UI -->|Events| ViewModel
+    ViewModel -->|State| UI
+    ViewModel --> Repository
+    Repository --> Local[Room Database]
+    Repository --> Remote[API Service]
+    
+```
 ## Technical Stack
 - **UI**: Jetpack Compose, Material 3
 - **Architecture**: MVVM, Clean Architecture
