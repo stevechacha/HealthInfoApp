@@ -27,16 +27,18 @@ A modern Android application for managing patients, healthcare programs, and enr
     - Pull-to-refresh functionality
 
 ## Screenshots
-
-![Screenshot 2025-04-27 at 17.40.32.png](Scrrenshot/Screenshot%202025-04-27%20at%2017.40.32.png)
-![Screenshot 2025-04-27 at 17.40.51.png](Scrrenshot/Screenshot%202025-04-27%20at%2017.40.51.png)
-![Screenshot 2025-04-27 at 17.40.54.png](Scrrenshot/Screenshot%202025-04-27%20at%2017.40.54.png)
-![Screenshot 2025-04-27 at 17.41.06.png](Scrrenshot/Screenshot%202025-04-27%20at%2017.41.06.png)
-![Screenshot 2025-04-27 at 17.41.46.png](Scrrenshot/Screenshot%202025-04-27%20at%2017.41.46.png)
-
+<div align="center">
+  <img src="Scrrenshot/Screenshot%202025-04-27%20at%2017.40.32.png" width="45%">
+  <img src="Scrrenshot/Screenshot%202025-04-27%20at%2017.40.32.png" width="45%">
+  <br>
+  <img src="Scrrenshot/Screenshot%202025-04-27%20at%2017.41.06.png" width="45%">
+  <img src="Scrrenshot/Screenshot%202025-04-27%20at%2017.41.46.png" width="45%">
+  <be>
+   <img src="Scrrenshot/Screenshot%202025-04-27%20at%2017.40.54.pngg" width="45%">
+  <img src="Scrrenshot/Screenshot%202025-04-27%20at%2017.41.46.png" width="45%">
+</div>
 
 ## Technical Stack
-
 - **UI**: Jetpack Compose, Material 3
 - **Architecture**: MVVM, Clean Architecture
 - **Dependency Injection**: Koin
@@ -44,12 +46,10 @@ A modern Android application for managing patients, healthcare programs, and enr
 - **Networking**: Retrofit
 - **State Management**: Kotlin Flows, StateFlow
 - **Navigation**: Compose Navigation
-- **Testing**: JUnit, MockK, Espresso
 
 ## Getting Started
 
 ### Prerequisites
-
 - Android Studio Giraffe (2022.3.1) or later
 - Android SDK 33+
 - Java 17
