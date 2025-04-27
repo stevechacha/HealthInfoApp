@@ -3,6 +3,7 @@ package com.chachadev.heathinfoapp.presentation.dashboard
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -15,29 +16,30 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.chachadev.heathinfoapp.presentation.clientProgram.CreateProgramScreen
 import com.chachadev.heathinfoapp.presentation.common.bottomBar.StandardScaffold
 import com.chachadev.heathinfoapp.presentation.common.composables.remember.rememberSnackBarState
 import com.chachadev.heathinfoapp.presentation.common.navigation.Destination
-import com.chachadev.heathinfoapp.presentation.enrollClient.EnrollPatientScreen
-import com.chachadev.heathinfoapp.presentation.patient.PatientScreen
+import com.chachadev.heathinfoapp.presentation.createProgram.CreateProgramScreen
+import com.chachadev.heathinfoapp.presentation.enrollPatient.EnrollPatientScreen
+import com.chachadev.heathinfoapp.presentation.moreScreen.MoreScreen
+import com.chachadev.heathinfoapp.presentation.patient.PatientRegistrationScreen
 import com.chachadev.heathinfoapp.presentation.patientList.PatientsListScreen
+import com.chachadev.heathinfoapp.presentation.programsList.ProgramsListScreen
 import kotlinx.coroutines.launch
 
 
 @RequiresApi(Build.VERSION_CODES.O)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     onNavigate: (Destination, Boolean) -> Unit,
 ) {
     val snackBarHostState = rememberSnackBarState()
     val scope = rememberCoroutineScope()
-    var addButtonIsExpanded by remember { mutableStateOf(false) }
+    var fabExpanded by remember { mutableStateOf(false) }
     val navigator = rememberNavController()
     val navBackStackEntry by navigator.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
-
-
 
     fun onError(error: String) {
         scope.launch {
@@ -48,24 +50,17 @@ fun DashboardScreen(
     fun isCurrentRoute(route: String?): Boolean =
         currentDestination?.hierarchy?.any { it.route == route } == true
 
-    fun onNavigate(destination: Destination) {
-        if (!isCurrentRoute(destination::class.qualifiedName))
-            navigator.navigate(destination)
-
-        addButtonIsExpanded = false
-    }
-
     StandardScaffold(
         navController = navigator,
         modifier = Modifier.fillMaxSize(),
-        onFabClick = {  },
+        onFabClick = { fabExpanded = !fabExpanded },
         isLoggedIn = true,
-        snackBarHostState = snackBarHostState
+        snackBarHostState = snackBarHostState,
     ) {
-        NavHost(navigator, startDestination = Destination.App.DashBoard.Patients) {
-            composable<Destination.App.DashBoard.Patients> {
+        NavHost(navigator, startDestination = Destination.App.DashBoard.PatientList) {
+            composable<Destination.App.DashBoard.PatientList> {
                 PatientsListScreen(
-                    onPatientClick = { patientId->
+                    onPatientClick = { patientId ->
                         onNavigate(
                             Destination.App.PatientDetailsRoute(patientId),
                             false
@@ -74,20 +69,32 @@ fun DashboardScreen(
                 )
             }
             composable<Destination.App.DashBoard.Programs> {
-                ProgramsListScreen()
+                ProgramsListScreen(
+                    onCreateNewClick = {
+                        onNavigate(Destination.App.DashBoard.CreateProgram, false)
+                    },
+                    onProgramClick = {}
+                )
             }
-
             composable<Destination.App.DashBoard.Enrollment> {
                 EnrollPatientScreen(
-                    onBackClick = {},
+                    onBackClick = { navigator.popBackStack() },
                     onEnrollmentSuccess = {}
                 )
             }
+            composable<Destination.App.DashBoard.More> {
+                MoreScreen(
+                    onBackClick = { navigator.popBackStack() }
+                )
+            }
+            composable<Destination.App.DashBoard.RegisterPatient> {
+                PatientRegistrationScreen()
+            }
 
-            composable<Destination.App.DashBoard.Profile> {
-                EnrollPatientScreen(
+            composable<Destination.App.DashBoard.CreateProgram> {
+                CreateProgramScreen(
                     onBackClick = {},
-                    onEnrollmentSuccess = {}
+                    onProgramCreated = {}
                 )
             }
         }
@@ -95,6 +102,3 @@ fun DashboardScreen(
 }
 
 
-@Composable
-fun AccountScreen(onNavigate: (Destination, Boolean) -> Unit, onGoBack: () -> Unit) {
-}

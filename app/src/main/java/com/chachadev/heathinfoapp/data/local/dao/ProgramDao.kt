@@ -9,11 +9,10 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ProgramDao {
-    // Single insert
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(program: ProgramEntity)
 
-    // Bulk insert
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(programs: List<ProgramEntity>)
 

@@ -9,6 +9,7 @@ import com.chachadev.heathinfoapp.data.mapper.toDomainModel
 import com.chachadev.heathinfoapp.data.mapper.toEntity
 import com.chachadev.heathinfoapp.data.network.api.HealthcareApiService
 import com.chachadev.heathinfoapp.data.network.reponses.PatientResponse
+import com.chachadev.heathinfoapp.data.network.reponses.PatientWithPrograms
 import com.chachadev.heathinfoapp.data.network.reponses.ProgramResponse
 import com.chachadev.heathinfoapp.data.network.reponses.RecommendationResponse
 import com.chachadev.heathinfoapp.domain.entity.EnrollmentRequest
@@ -193,12 +194,8 @@ class HealthcareRepository(
         }
     }
 
-    suspend fun enrollPatient(patientId: String, programId: String): Resource<PatientResponse> {
-        if (!isNetworkAvailable()) {
-            return Resource.Error(message = "No internet connection")
-        }
-
-        return try {
+    suspend fun enrollPatient(patientId: String, programId: String): Flow<Resource<PatientResponse>> {
+        return flow<Resource<PatientResponse>> {
             val response = apiService.enrollPatient(
                 apiKey,
                 EnrollmentRequest(patientId, programId)
@@ -211,8 +208,8 @@ class HealthcareRepository(
             } else {
                 Resource.Error(message = response.message ?: "Enrollment failed")
             }
-        } catch (e: Exception) {
-            Resource.Error(message = e.message ?: "Enrollment error")
+        } .catch { e ->
+            emit(Resource.Error(message = e.message ?: "Unknown error"))
         }
     }
 
@@ -248,10 +245,7 @@ class HealthcareRepository(
         }
     }
 
-    data class PatientWithPrograms(
-        val patient: PatientResponse,
-        val enrolledPrograms: List<ProgramResponse>
-    )
+
 
     // Region: System Health
     suspend fun checkHealth(): Resource<Boolean> {

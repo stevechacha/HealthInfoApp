@@ -10,11 +10,11 @@ enum class BottomNavigation(
     val contentDescription: String?,
     val route: Destination
 ) {
-    HOME("Home", R.drawable.ic_launcher_background,"Home", Destination.App.DashBoard.Patients),
-    TRANSACT("Transact", R.drawable.ic_launcher_background,"Transact", Destination.App.DashBoard.Programs),
-    LOAN("LOAN",null,"", Destination.App.DashBoard.FabAction),
-    DISCOVER("Discover", R.drawable.ic_launcher_background,"Discover", Destination.App.DashBoard.Enrollment),
-    ACCOUNT("More", R.drawable.ic_launcher_background, "More", Destination.App.DashBoard.Profile),
+    PATIENT("Patients", R.drawable.home,"Patients", Destination.App.DashBoard.PatientList),
+    PROGRAMS("Programs", R.drawable.receipt_long_24px,"Programs", Destination.App.DashBoard.Programs),
+    FABACTION("",null,"", Destination.App.DashBoard.FabAction),
+    ENROLL("Enroll", R.drawable.baseline_workspaces_filled_24,"Enroll", Destination.App.DashBoard.Enrollment),
+    MORE("More", R.drawable.outline_more_horiz_24, "More", Destination.App.DashBoard.More),
 
 }
 

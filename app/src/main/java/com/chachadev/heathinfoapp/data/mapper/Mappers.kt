@@ -1,14 +1,11 @@
 package com.chachadev.heathinfoapp.data.mapper
 
-import com.chachadev.heathinfoapp.data.local.entity.ClientEntity
 import com.chachadev.heathinfoapp.data.local.entity.EnrollmentEntity
 import com.chachadev.heathinfoapp.data.local.entity.PatientEntity
 import com.chachadev.heathinfoapp.data.local.entity.ProgramEntity
-import com.chachadev.heathinfoapp.data.network.reponses.ClientResponse
+import com.chachadev.heathinfoapp.data.network.reponses.EnrollmentResponse
 import com.chachadev.heathinfoapp.data.network.reponses.PatientResponse
 import com.chachadev.heathinfoapp.data.network.reponses.ProgramResponse
-import com.chachadev.heathinfoapp.domain.entity.ClientRequest
-import com.chachadev.heathinfoapp.domain.entity.PatientRequest
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
@@ -90,10 +87,6 @@ fun EnrollmentResponse.toEntity(): EnrollmentEntity {
         program_id = this.program_id
     )
 }
-data class EnrollmentResponse(
-    val patient_id: String,
-    val program_id: String
-)
 
 data class PatientWithPrograms(
     val patient: PatientResponse,

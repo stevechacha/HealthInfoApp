@@ -39,11 +39,14 @@ sealed interface Destination {
     @Serializable
     data object App : Destination {
         @Serializable data object DashBoard : Destination {
-            @Serializable data object Patients : Destination
+            @Serializable data object PatientList : Destination
             @Serializable data object Programs : Destination
             @Serializable data object FabAction : Destination
             @Serializable data object Enrollment : Destination
-            @Serializable data object Profile : Destination
+            @Serializable data object More : Destination
+            @Serializable data object RegisterPatient : Destination
+            @Serializable data object CreateProgram : Destination
+
         }
 
         @Serializable data class PatientDetailsRoute(val id: String): Destination

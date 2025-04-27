@@ -8,7 +8,6 @@ import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.chachadev.heathinfoapp.data.network.reponses.ProgramType
 
-// PatientEntity.kt
 @Entity(tableName = "patients")
 data class PatientEntity(
     @PrimaryKey val patient_id: String,
@@ -19,13 +18,4 @@ data class PatientEntity(
     val created_at: String,
     val last_updated: Long = System.currentTimeMillis()
 )
-
-@Entity(tableName = "clients")
-data class ClientEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val name: String,
-    val age: Int,
-    val gender: String
-)
-
 

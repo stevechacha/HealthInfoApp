@@ -23,7 +23,7 @@ class ProgramsListViewModel(
         loadPrograms()
     }
 
-    fun loadPrograms(refresh: Boolean = false) {
+    private fun loadPrograms(refresh: Boolean = false) {
         viewModelScope.launch {
             _programs.value = Resource.Loading()
             try {
@@ -38,13 +38,13 @@ class ProgramsListViewModel(
                     }
                 }
             } catch (e: Exception) {
-                _programs.value = Resource.Error(e.message ?: "Failed to load programs")
+                _programs.value = Resource.Error(null,e.message ?: "Failed to load programs")
             }
         }
     }
 
     fun filterPrograms(type: ProgramType?) {
-        _programs.value = Resource.Loading(_programs.value.data)
+        _programs.value = Resource.Loading()
         viewModelScope.launch {
             _programs.value = Resource.Success(
                 if (type == null) {

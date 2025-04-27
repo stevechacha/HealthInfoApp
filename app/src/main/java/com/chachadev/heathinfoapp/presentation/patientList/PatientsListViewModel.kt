@@ -13,10 +13,6 @@ class PatientsListViewModel(
     private val repository: HealthcareRepository
 ) : ViewModel() {
 
-    // State for single patient
-    private val _patientState = MutableStateFlow<Resource<PatientResponse>?>(null)
-    val patientState: StateFlow<Resource<PatientResponse>?> = _patientState
-
     // State for all patients
     private val _patientsState = MutableStateFlow<Resource<List<PatientResponse>>>(Resource.Loading())
     val patientsState: StateFlow<Resource<List<PatientResponse>>> = _patientsState
@@ -40,13 +36,6 @@ class PatientsListViewModel(
                 _patientsState.value = resource
                 _isRefreshing.value = false
             }
-        }
-    }
-
-    fun loadPatient(patientId: String, refresh: Boolean = false) {
-        viewModelScope.launch {
-            _patientState.value = Resource.Loading()
-            _patientState.value = repository.getPatient(patientId, refresh)
         }
     }
 

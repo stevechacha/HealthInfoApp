@@ -10,10 +10,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -26,6 +28,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -57,56 +60,72 @@ fun PatientsListScreen(
     val patientsState by viewModel.patientsState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
-    val coroutineScope = rememberCoroutineScope()
     val refreshState = rememberPullToRefreshState()
 
     // Filter patients based on search query
     val filteredPatients = remember(patientsState.data, searchQuery) {
-        patientsState.data?.filter { patient ->
-            patient.full_name.contains(searchQuery, ignoreCase = true) ||
-                    patient.patient_id.contains(searchQuery, ignoreCase = true)
-        } ?: emptyList()
+        when (patientsState) {
+            is Resource.Success -> {
+                patientsState.data?.filter { patient ->
+                    patient.full_name.contains(searchQuery, ignoreCase = true) ||
+                            patient.national_id.contains(searchQuery, ignoreCase = true) ||
+                            patient.patient_id.contains(searchQuery, ignoreCase = true)
+                } ?: emptyList()
+            }
+            else -> emptyList()
+        }
     }
 
     Scaffold(
         topBar = {
-            SearchTopBar(
+            SearchAppBar(
                 query = searchQuery,
-                onQueryChange = viewModel::updateSearchQuery
+                onQueryChange = viewModel::updateSearchQuery,
+                onSearch = { viewModel.updateSearchQuery(it) }
             )
         }
     ) { padding ->
-        
-        PullToRefreshBox(
-            state = refreshState,
-            onRefresh = viewModel::refresh,
-            modifier = Modifier.padding(padding),
-            isRefreshing = isRefreshing,
-            contentAlignment = Alignment.Center,
-            indicator = {
-
-            }
-        ) {
-            when (patientsState) {
-                is Resource.Loading -> {
-                    if (filteredPatients.isEmpty()) {
-                        CenterLoadingIndicator()
+        Box(modifier = Modifier.padding(padding)) {
+            PullToRefreshBox(
+                state = refreshState,
+                modifier = Modifier.fillMaxSize(),
+                isRefreshing = true,
+                indicator = {},
+                contentAlignment = Alignment.TopStart,
+                onRefresh = {},
+            ) {
+                when (patientsState) {
+                    is Resource.Loading -> {
+                        if (filteredPatients.isEmpty()) {
+                            CenterLoadingIndicator()
+                        }
                     }
-                }
-                is Resource.Error -> {
-                    ErrorState(
-                        message = (patientsState as Resource.Error).message ?: "Error loading patients",
-                        onRetry = viewModel::refresh
-                    )
-                }
-                is Resource.Success -> {
-                    if (filteredPatients.isEmpty()) {
-                        EmptyState()
-                    } else {
-                        PatientListContent(
-                            patients = filteredPatients,
-                            onPatientClick = onPatientClick
+                    is Resource.Error -> {
+                        ErrorState(
+                            message = (patientsState as Resource.Error).message
+                                ?: "Error loading patients",
+                            onRetry = viewModel::refresh
                         )
+                    }
+                    is Resource.Success -> {
+                        if (filteredPatients.isEmpty()) {
+                            EmptySearchState(
+                                searchQuery = searchQuery,
+                                onClearSearch = { viewModel.updateSearchQuery("") }
+                            )
+                        } else {
+                            LazyColumn {
+                                items(
+                                    items = filteredPatients,
+                                    key = { it.patient_id }
+                                ) { patient ->
+                                    PatientListItem(
+                                        patient = patient,
+                                        onClick = { onPatientClick(patient.patient_id) }
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -114,23 +133,22 @@ fun PatientsListScreen(
     }
 }
 
-
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SearchTopBar(
+private fun SearchAppBar(
     query: String,
-    onQueryChange: (String) -> Unit
+    onQueryChange: (String) -> Unit,
+    onSearch: (String) -> Unit
 ) {
-    var showSearch by remember { mutableStateOf(false) }
+    var searchActive by remember { mutableStateOf(false) }
 
-    if (showSearch) {
+    if (searchActive) {
         SearchBar(
             query = query,
             onQueryChange = onQueryChange,
-            onSearch = { showSearch = false },
+            onSearch = { onSearch(it) },
             active = true,
-            onActiveChange = { showSearch = it },
+            onActiveChange = { searchActive = it },
             modifier = Modifier.fillMaxWidth()
         ) {
             // Search suggestions could go here
@@ -139,7 +157,7 @@ private fun SearchTopBar(
         TopAppBar(
             title = { Text("Patients") },
             actions = {
-                IconButton(onClick = { showSearch = true }) {
+                IconButton(onClick = { searchActive = true }) {
                     Icon(Icons.Default.Search, contentDescription = "Search")
                 }
             }
@@ -148,16 +166,31 @@ private fun SearchTopBar(
 }
 
 @Composable
-private fun PatientListContent(
-    patients: List<PatientResponse>,
-    onPatientClick: (String) -> Unit
+private fun EmptySearchState(
+    searchQuery: String,
+    onClearSearch: () -> Unit
 ) {
-    LazyColumn {
-        items(patients, key = { it.patient_id }) { patient ->
-            PatientListItem(
-                patient = patient,
-                onClick = { onPatientClick(patient.patient_id) }
-            )
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.SearchOff,
+            contentDescription = "No results",
+            modifier = Modifier.size(48.dp),
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "No patients found for \"$searchQuery\"",
+            style = MaterialTheme.typography.titleMedium
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        TextButton(onClick = onClearSearch) {
+            Text("Clear search")
         }
     }
 }
@@ -192,6 +225,8 @@ private fun PatientListItem(
     }
 }
 
+
+
 @Composable
 private fun CenterLoadingIndicator() {
     Box(
@@ -203,7 +238,7 @@ private fun CenterLoadingIndicator() {
 }
 
 @Composable
-private fun ErrorState(
+fun ErrorState(
     message: String,
     onRetry: () -> Unit
 ) {
@@ -223,26 +258,5 @@ private fun ErrorState(
         Button(onClick = onRetry) {
             Text("Retry")
         }
-    }
-}
-
-@Composable
-private fun EmptyState() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "No patients found",
-            style = MaterialTheme.typography.titleMedium
-        )
-        Text(
-            text = "Try adjusting your search or refresh the list",
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(top = 8.dp)
-        )
     }
 }

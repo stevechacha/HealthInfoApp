@@ -1,14 +1,16 @@
 package com.chachadev.heathinfoapp.presentation.common.navigation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.toRoute
-import com.chachadev.heathinfoapp.data.network.reponses.PatientResponse
 import com.chachadev.heathinfoapp.presentation.dashboard.DashboardScreen
-import com.chachadev.heathinfoapp.presentation.enrollClient.EnrollPatientScreen
-import com.chachadev.heathinfoapp.presentation.patientDetails.PatientDetailsScreen
+import com.chachadev.heathinfoapp.presentation.enrollPatient.EnrollPatientScreen
+import com.chachadev.heathinfoapp.presentation.patientDetailsProfile.PatientDetailsScreen
 
+@RequiresApi(Build.VERSION_CODES.O)
 fun NavGraphBuilder.appNavigation(
     onNavigate: (Destination, Boolean) -> Unit,
     onNavigateBack: (Destination) -> Unit,
@@ -32,34 +34,8 @@ fun NavGraphBuilder.appNavigation(
                 onEnrollmentSuccess =  {}
             )
         }
-//        composable<Destination.App.LoanStatement> {
-//            LoanMiniStatementScreen()
-//        }
-//        composable<Destination.App.Deposit> {
-//            DepositScreen(
-//                onGoBack = onGoBack,
-//                onclickContinue = {}
-//            )
-//        }
-//        composable<Destination.App.Withdraw> {
-//            WithdrawScreen(
-//                onGoBack = onGoBack,
-//                onClickContinue = {}
-//            )
-//        }
-//        composable<Destination.App.BuyAirtime> {
-//            BuyAirtimeScreen(
-//                onGoBack = onGoBack,
-//                onClickContinue = {}
-//            )
-//        }
-//
-//        composable<Destination.App.BankTransfer> {
-//            BankTransferScreen(
-//                onGoBack = onGoBack,
-//                onClickContinue = {}
-//            )
-//        }
+
+
 
     }
 }

@@ -7,7 +7,6 @@ import org.koin.dsl.module
 
 val repoModule = module {
     single { "securekey123" }
-
     single {
         HealthcareRepository(
             apiService = get(),

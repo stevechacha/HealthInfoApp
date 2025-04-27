@@ -10,8 +10,7 @@ import com.chachadev.heathinfoapp.domain.entity.Resource
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-// PatientViewModel.kt
-class PatientViewModel(private val repository: HealthcareRepository) : ViewModel() {
+class PatientRegistrationViewModel(private val repository: HealthcareRepository) : ViewModel() {
     private val _patientState = MutableStateFlow<Resource<PatientResponse>?>(null)
     val patientState: StateFlow<Resource<PatientResponse>?> = _patientState
 
@@ -28,7 +27,9 @@ class PatientViewModel(private val repository: HealthcareRepository) : ViewModel
     fun enrollPatient(patientId: String, programId: String) {
         viewModelScope.launch {
             _enrollmentState.value = Resource.Loading()
-            _enrollmentState.value = repository.enrollPatient(patientId, programId)
+            repository.enrollPatient(patientId, programId).collect { result ->
+                _patientState.value  = result
+            }
         }
     }
 

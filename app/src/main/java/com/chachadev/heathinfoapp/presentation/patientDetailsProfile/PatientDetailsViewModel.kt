@@ -1,4 +1,4 @@
-package com.chachadev.heathinfoapp.presentation.patientDetails
+package com.chachadev.heathinfoapp.presentation.patientDetailsProfile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

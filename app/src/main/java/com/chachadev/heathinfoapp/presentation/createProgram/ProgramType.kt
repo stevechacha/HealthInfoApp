@@ -1,4 +1,4 @@
-package com.chachadev.heathinfoapp.presentation.clientProgram
+package com.chachadev.heathinfoapp.presentation.createProgram
 
 import com.chachadev.heathinfoapp.data.network.reponses.ProgramType
 

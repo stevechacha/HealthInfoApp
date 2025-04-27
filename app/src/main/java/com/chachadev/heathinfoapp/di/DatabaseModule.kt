@@ -7,7 +7,6 @@ import org.koin.dsl.module
 
 val databaseModule = module {
 
-    // Provide Room Database singleton
     single {
         Room.databaseBuilder(
             androidContext(),

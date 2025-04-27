@@ -1,4 +1,4 @@
-package com.chachadev.heathinfoapp.presentation.clientProgram
+package com.chachadev.heathinfoapp.presentation.createProgram
 
 
 import androidx.lifecycle.ViewModel
@@ -9,7 +9,6 @@ import com.chachadev.heathinfoapp.data.repo.HealthcareRepository
 import com.chachadev.heathinfoapp.domain.entity.ProgramRequest
 import com.chachadev.heathinfoapp.domain.entity.Resource
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch

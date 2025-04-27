@@ -15,9 +15,11 @@ import com.chachadev.heathinfoapp.data.local.entity.ProgramEntity
 import com.chachadev.heathinfoapp.data.local.utils.Converters
 
 
-// HealthcareDatabase.kt
 @Database(
-    entities = [PatientEntity::class, ProgramEntity::class, EnrollmentEntity::class],
+    entities = [
+        PatientEntity::class,
+        ProgramEntity::class,
+        EnrollmentEntity::class],
     version = 1,
     exportSchema = false
 )
@@ -52,20 +54,3 @@ abstract class HealthcareDatabase : RoomDatabase() {
         }
     }
 }
-
-//    companion object {
-//        @Volatile private var INSTANCE: AppDatabase? = null
-//
-//        fun getInstance(context: Context): AppDatabase {
-//            return INSTANCE ?: synchronized(this) {
-//                val instance = Room.databaseBuilder(
-//                    context.applicationContext,
-//                    AppDatabase::class.java,
-//                    "health-info-db"
-//                ).build()
-//                INSTANCE = instance
-//                instance
-//            }
-//        }
-//    }
-//}

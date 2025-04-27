@@ -5,7 +5,6 @@ import com.chachadev.heathinfoapp.data.network.reponses.ProgramType
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-// Converters.kt
 class Converters {
     @TypeConverter
     fun fromProgramType(value: ProgramType): String = value.name
