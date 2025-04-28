@@ -103,24 +103,20 @@ class HealthcareRepository(
         }
     }
 
-    suspend fun registerPatient(patient: PatientRequest): Resource<PatientResponse> {
-        if (!isNetworkAvailable()) {
-            return Resource.Error(message = "No internet connection")
-        }
-
-        return try {
+    suspend fun registerPatient(patient: PatientRequest): Flow<Resource<PatientResponse>> {
+        return flow<Resource<PatientResponse>> {
             val response = apiService.registerPatient(apiKey, patient)
             if (response.status == "success") {
                 response.data?.let { registeredPatient ->
                     // Cache the new patient
                     patientDao.insert(registeredPatient.toEntity())
                     Resource.Success(registeredPatient)
-                } ?: Resource.Error(message = "Registration failed")
+                } ?: emit(Resource.Error(message = "Registration failed"))
             } else {
-                Resource.Error(message = response.message ?: "Registration error")
+               emit(Resource.Error(message = response.message ?: "Registration error"))
             }
-        } catch (e: Exception) {
-            Resource.Error(message = e.message ?: "Registration failed")
+        }.catch { e->
+            emit(Resource.Error(message = e.message ?: "Registration failed"))
         }
     }
 
@@ -254,6 +250,24 @@ class HealthcareRepository(
             Resource.Success(response.status == "success")
         } catch (e: Exception) {
             Resource.Error(message = e.message ?: "Health check failed", data = false)
+        }
+    }
+
+    suspend fun searchPatient(name: String?, programId: String?): Flow<Resource<List<PatientResponse>>>{
+       return flow<Resource<List<PatientResponse>>> {
+            val searchQueryResponse = apiService.searchPatients(apiKey,name,programId)
+            if (searchQueryResponse.status =="success"){
+                searchQueryResponse.data?.let { patientResponses ->
+                    // Cache the new program
+                    emit(Resource.Success(patientResponses))
+                } ?: emit(Resource.Error(message = "Patient creation failed"))
+            } else {
+                emit(Resource.Error(message = searchQueryResponse.message ?: "Search Patient error"))
+            }
+
+       }.catch { e->
+           emit(Resource.Error(message = e.message ?: "Failed to load patient data"))
+
         }
     }
 

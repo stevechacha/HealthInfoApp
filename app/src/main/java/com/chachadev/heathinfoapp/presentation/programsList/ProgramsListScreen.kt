@@ -62,6 +62,7 @@ import com.chachadev.heathinfoapp.data.network.reponses.PatientResponse
 import com.chachadev.heathinfoapp.data.network.reponses.ProgramResponse
 import com.chachadev.heathinfoapp.data.network.reponses.ProgramType
 import com.chachadev.heathinfoapp.domain.entity.Resource
+import com.chachadev.heathinfoapp.presentation.common.composables.CenterLoadingIndicator
 import com.chachadev.heathinfoapp.presentation.patientList.ErrorState
 import com.google.android.material.chip.Chip
 import kotlinx.coroutines.delay
@@ -99,14 +100,6 @@ fun ProgramsListScreen(
                     }
                 }
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onCreateNewClick,
-                modifier = Modifier.padding(bottom = 56.dp) // Account for bottom nav
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Create Program")
-            }
         }
     ) { padding ->
         PullToRefreshBox(
@@ -117,37 +110,31 @@ fun ProgramsListScreen(
             contentAlignment = Alignment.Center,
             indicator = {},
         ) {
-            when (programsState) {
-                is Resource.Loading -> {
-                    if ((programsState as Resource.Loading).data.isNullOrEmpty()) {
-                        CircularProgressIndicator()
-                    }
+            if (programsState.isLoading){
+                if (programsState.programs.isNullOrEmpty()) {
+                    CenterLoadingIndicator()
                 }
-                is Resource.Error -> {
-                    ErrorState(
-                        message = (programsState as Resource.Error).message ?: "Error loading programs",
-                        onRetry = { viewModel.refresh() }
+            } else if (programsState.programs?.isNotEmpty() == true) {
+                if (programsState.programs!!.isEmpty()) {
+                    EmptyState(
+                        onRefresh = { viewModel.refresh() },
+                        onCreateNew = onCreateNewClick
                     )
-                }
-                is Resource.Success -> {
-                    val programs = (programsState as Resource.Success).data ?: emptyList()
-                    
-                    if (programs.isEmpty()) {
-                        EmptyState(
-                            onRefresh = { viewModel.refresh() },
-                            onCreateNew = onCreateNewClick
-                        )
-                    } else {
-                        LazyColumn(state = scrollState) {
-                            items(programs, key = { it.program_id }) { program ->
-                                ProgramListItem(
-                                    program = program,
-                                    onClick = { onProgramClick(program.program_id) }
-                                )
-                            }
+                } else {
+                    LazyColumn(state = scrollState) {
+                        items(programsState.programs!!, key = { it.program_id }) { program ->
+                            ProgramListItem(
+                                program = program,
+                                onClick = { onProgramClick(program.program_id) }
+                            )
                         }
                     }
                 }
+            } else {
+                ErrorState(
+                    message = programsState.errorMessage ?: "Error loading programs",
+                    onRetry = { viewModel.refresh() }
+                )
             }
         }
     }

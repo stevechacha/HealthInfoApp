@@ -8,14 +8,16 @@ import com.chachadev.heathinfoapp.data.repo.HealthcareRepository
 import com.chachadev.heathinfoapp.domain.entity.Resource
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class ProgramsListViewModel(
     private val repository: HealthcareRepository
 ) : ViewModel() {
 
-    private val _programs = MutableStateFlow<Resource<List<ProgramResponse>>>(Resource.Loading())
-    val programs: StateFlow<Resource<List<ProgramResponse>>> = _programs
+    private val _programs = MutableStateFlow(ProgramsUiState())
+    val programs: StateFlow<ProgramsUiState> = _programs.asStateFlow()
 
     private var allPrograms = listOf<ProgramResponse>()
 
@@ -25,34 +27,33 @@ class ProgramsListViewModel(
 
     private fun loadPrograms(refresh: Boolean = false) {
         viewModelScope.launch {
-            _programs.value = Resource.Loading()
+            _programs.update { it.copy(isLoading = true) }
             try {
                 repository.getPrograms(refresh).collect { resource ->
                     when (resource) {
                         is Resource.Success -> {
                             allPrograms = resource.data ?: emptyList()
-                            _programs.value = Resource.Success(allPrograms)
+                            _programs.update { it.copy(programs = resource.data) }
                         }
-                        is Resource.Error -> _programs.value = resource
-                        is Resource.Loading<*> -> {_programs.value = resource}
+                        is Resource.Error -> _programs.update { it.copy(errorMessage = resource.message) }
+                        is Resource.Loading<*> -> {_programs.update { it.copy(isLoading = true) }}
                     }
                 }
             } catch (e: Exception) {
-                _programs.value = Resource.Error(null,e.message ?: "Failed to load programs")
+                _programs.update { it.copy(errorMessage = e.message ?: "Failed to load programs") }
             }
         }
     }
 
     fun filterPrograms(type: ProgramType?) {
-        _programs.value = Resource.Loading()
+        _programs.update { it.copy(isLoading = true) }
         viewModelScope.launch {
-            _programs.value = Resource.Success(
-                if (type == null) {
-                    allPrograms
-                } else {
-                    allPrograms.filter { it.program_type == type }
-                }
-            )
+            if (type == null){
+                _programs.update { it.copy(isLoading = false, programs = allPrograms) }
+
+            } else {
+                allPrograms.filter { it.program_type == type }
+            }
         }
     }
 

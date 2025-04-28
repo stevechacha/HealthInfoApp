@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.chachadev.heathinfoapp.data.network.reponses.PatientResponse
 import com.chachadev.heathinfoapp.domain.entity.Resource
+import com.chachadev.heathinfoapp.presentation.common.composables.CenterLoadingIndicator
 import org.koin.androidx.compose.koinViewModel
 
 
@@ -60,13 +61,15 @@ fun PatientDetailsScreen(
         }
     ) { padding ->
         Box(modifier = Modifier.padding(padding)) {
-            when (val state = patientState) {
-                is Resource.Loading -> CenterLoadingIndicator()
-                is Resource.Error -> ErrorState(
-                    message = state.message ?: "Error loading patient",
+            if (patientState.isLoading){
+                CenterLoadingIndicator()
+            } else if (patientState.errorMessage.isNotEmpty()){
+                ErrorState(
+                    message = patientState.errorMessage ?: "Error loading patient",
                     onRetry = { viewModel.loadPatient(patientId) }
                 )
-                is Resource.Success -> state.data?.let { PatientDetailsContent(patient = it) }
+            } else {
+                patientState.data?.let { PatientDetailsContent(patient = it) }
             }
         }
     }
@@ -134,15 +137,7 @@ private fun PatientDetailRow(label: String, value: String) {
     }
 }
 
-@Composable
-private fun CenterLoadingIndicator() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator()
-    }
-}
+
 
 @Composable
 private fun ErrorState(message: String, onRetry: () -> Unit) {

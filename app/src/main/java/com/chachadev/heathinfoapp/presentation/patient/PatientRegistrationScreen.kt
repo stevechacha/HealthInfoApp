@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -27,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -46,6 +48,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import com.chachadev.heathinfoapp.data.network.reponses.PatientResponse
 import com.chachadev.heathinfoapp.domain.entity.PatientRequest
 import com.chachadev.heathinfoapp.domain.entity.Resource
+import com.chachadev.heathinfoapp.presentation.common.composables.CenterLoadingIndicator
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
 import org.koin.androidx.compose.koinViewModel
@@ -59,19 +62,14 @@ fun PatientRegistrationScreen(
     viewModel: PatientRegistrationViewModel = koinViewModel(),
     onBackClick: () -> Unit = {}
 ) {
-    // Form states
-    var nationalId by remember { mutableStateOf("") }
-    var fullName by remember { mutableStateOf("") }
-    var dateOfBirth by remember { mutableStateOf("") }
-    var bloodType by remember { mutableStateOf("") }
-    var expanded by remember { mutableStateOf(false) }
+    val uiState by viewModel.patientUiState.collectAsState()
+    var showSuccessDialog by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState()
+    var showDatePicker by remember { mutableStateOf(false) }
 
     // Error states
     var dateError by remember { mutableStateOf<String?>(null) }
     var bloodTypeError by remember { mutableStateOf<String?>(null) }
-
-    // ViewModel states
-    val patientState by viewModel.patientState.collectAsState()
     val apiErrors = remember { mutableStateListOf<String>() }
 
     // Blood type options
@@ -80,46 +78,55 @@ fun PatientRegistrationScreen(
         "AB+", "AB-", "O+", "O-"
     )
 
-    // Handle API error responses
-    LaunchedEffect(patientState) {
-        if (patientState is Resource.Error) {
-            val error = (patientState as Resource.Error)
-            if (error is HttpException) {
-                try {
-                    val errorJson = error.response()?.errorBody()?.string()
-                    val errors = Json.decodeFromString<List<Map<String, Any>>>(errorJson ?: "")
-                    apiErrors.clear()
-                    errors.forEach { err ->
-                        when (err["loc"]?.toString()) {
-                            "('body', 'date_of_birth')" -> {
-                                dateError = err["msg"].toString()
-                            }
-                            "('body', 'blood_type')" -> {
-                                bloodTypeError = err["msg"].toString()
-                            }
-                            else -> apiErrors.add(err["msg"].toString())
-                        }
-                    }
-                } catch (e: Exception) {
-                    apiErrors.add("Failed to parse error response")
-                }
-            }
+    // Handle API responses
+    LaunchedEffect(uiState.data) {
+        uiState.data?.let {
+            showSuccessDialog = true
+            println("Print$it")
+            // Clear form through ViewModel
+            viewModel.clearForm()
         }
     }
 
-    Scaffold (
-            topBar = {
-                CenterAlignedTopAppBar(
-                    title = { Text("Create New Program") },
-                    navigationIcon = {
-                        IconButton(onClick = onBackClick) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                        }
+    // Success Dialog
+    if (showSuccessDialog && uiState.data != null) {
+        AlertDialog(
+            onDismissRequest = { showSuccessDialog = false },
+            title = { Text("Registration Successful") },
+            text = {
+                Column {
+                    Text("Patient ID: ${uiState.data!!.patient_id}")
+                    Text("Name: ${uiState.data!!.full_name}")
+                    Text("National ID: ${uiState.data!!.national_id}")
+                    Text("Date of Birth: ${uiState.data!!.date_of_birth}")
+                    Text("Blood Type: ${uiState.data!!.blood_type}")
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showSuccessDialog = false
+                        onBackClick()
                     }
-                )
+                ) {
+                    Text("OK")
+                }
+            }
+        )
+    }
 
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("Register New Patient") },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
         }
-    ){  paddingValues ->
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -127,14 +134,14 @@ fun PatientRegistrationScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // National ID
-            OutlinedTextField(
-                value = nationalId,
-                onValueChange = { nationalId = it },
-                label = { Text("National ID") },
-                isError = nationalId.length !in 10..15,
+
+            AppOutlinedTextField(
+                value = uiState.nationalId,
+                onValueChange = viewModel::updateNationId,
+                label = "National ID",
+                isError = uiState.nationalId.length !in 10..15,
                 supportingText = {
-                    if (nationalId.length !in 10..15) {
+                    if (uiState.nationalId.length !in 10..15) {
                         Text("Must be 10-15 characters")
                     }
                 },
@@ -143,14 +150,13 @@ fun PatientRegistrationScreen(
                 singleLine = true
             )
 
-            // Full Name
-            OutlinedTextField(
-                value = fullName,
-                onValueChange = { fullName = it },
-                label = { Text("Full Name") },
-                isError = fullName.length < 3,
+            AppOutlinedTextField(
+                value = uiState.fullName,
+                onValueChange = viewModel::updateFullName,
+                label = "Full Name",
+                isError = uiState.fullName.length < 3,
                 supportingText = {
-                    if (fullName.length < 3) {
+                    if (uiState.fullName.length < 3) {
                         Text("Must be at least 3 characters")
                     }
                 },
@@ -158,34 +164,30 @@ fun PatientRegistrationScreen(
                 singleLine = true
             )
 
-            // Date of Birth
-            OutlinedTextField(
-                value = dateOfBirth,
-                onValueChange = {
-                    dateOfBirth = it
-                },
-                label = { Text("Date of Birth") },
+            AppOutlinedTextField(
+                value = uiState.dateOfBirth,
+                onValueChange = viewModel::updateDateOfBirth,
+                label = "Date of Birth (YYYY-MM-DD)",
                 isError = dateError != null,
                 supportingText = { dateError?.let { Text(it) } },
                 modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                singleLine = true
+                singleLine = true,
             )
 
             // Blood Type Dropdown
             ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = it }
+                expanded = uiState.expanded,
+                onExpandedChange = viewModel::updateExpand
             ) {
                 OutlinedTextField(
                     readOnly = true,
-                    value = bloodType,
+                    value = uiState.bloodType,
                     onValueChange = {},
                     label = { Text("Blood Type") },
                     isError = bloodTypeError != null,
                     supportingText = { bloodTypeError?.let { Text(it) } },
                     trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = uiState.expanded)
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -193,20 +195,20 @@ fun PatientRegistrationScreen(
                 )
 
                 ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
+                    expanded = uiState.expanded,
+                    onDismissRequest = { viewModel.updateExpand(false) }
                 ) {
                     bloodTypeOptions.forEach { type ->
                         DropdownMenuItem(
                             text = { Text(type) },
                             onClick = {
-                                bloodType = type
+                                viewModel.updateBloodType(type)
                                 bloodTypeError = if (type.matches(Regex("^(A|B|AB|O)[+-]$"))) {
                                     null
                                 } else {
                                     "Invalid blood type format"
                                 }
-                                expanded = false
+                                viewModel.updateExpand(false)
                             }
                         )
                     }
@@ -214,31 +216,31 @@ fun PatientRegistrationScreen(
             }
 
             // API Errors
-            apiErrors.forEach { error ->
+            if (uiState.error.isNotEmpty()) {
                 Text(
-                    text = error,
+                    text = uiState.error,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(vertical = 4.dp)
                 )
             }
 
-            // Submit Button
-            Button(
+            AppButton(
+                text = "Register Patient",
                 onClick = {
                     // Clear previous errors
                     dateError = null
                     bloodTypeError = null
-                    apiErrors.clear()
+                    viewModel.updateError("")
 
                     // Validate before submission
                     var isValid = true
 
-                    if (!isValidDate(dateOfBirth)) {
+                    if (!isValidDate(uiState.dateOfBirth)) {
                         dateError = "Invalid date format (YYYY-MM-DD)"
                         isValid = false
                     }
 
-                    if (!bloodType.matches(Regex("^(A|B|AB|O)[+-]$"))) {
+                    if (!uiState.bloodType.matches(Regex("^(A|B|AB|O)[+-]$"))) {
                         bloodTypeError = "Must be in format A+, B-, etc."
                         isValid = false
                     }
@@ -246,10 +248,10 @@ fun PatientRegistrationScreen(
                     if (isValid) {
                         viewModel.registerPatient(
                             PatientRequest(
-                                national_id = nationalId,
-                                full_name = fullName,
-                                date_of_birth = dateOfBirth,
-                                blood_type = bloodType
+                                national_id = uiState.nationalId,
+                                full_name = uiState.fullName,
+                                date_of_birth = uiState.dateOfBirth,
+                                blood_type = uiState.bloodType
                             )
                         )
                     }
@@ -257,38 +259,20 @@ fun PatientRegistrationScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 16.dp),
-                enabled = nationalId.isNotEmpty() &&
-                        fullName.isNotEmpty() &&
-                        dateOfBirth.isNotEmpty() &&
-                        bloodType.isNotEmpty()
-            ) {
-                Text("Register Patient")
-            }
+                enabled = uiState.nationalId.isNotEmpty() &&
+                        uiState.fullName.isNotEmpty() &&
+                        uiState.dateOfBirth.isNotEmpty() &&
+                        uiState.bloodType.isNotEmpty()
+            )
 
-            // Loading and Success States
-            when (patientState) {
-                is Resource.Loading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-                }
-                is Resource.Success -> {
-                    (patientState as Resource.Success<PatientResponse>).data?.let { PatientInfo(patient = it) }
-                    LaunchedEffect(Unit) {
-                        // Reset form after 2 seconds
-                        delay(2000)
-                        nationalId = ""
-                        fullName = ""
-                        dateOfBirth = ""
-                        bloodType = ""
-                        apiErrors.clear()
-                    }
-                }
-                else -> Unit
-            }
+
+
+
         }
     }
-
-
 }
+
+
 
 // Date validation helper
 @RequiresApi(Build.VERSION_CODES.O)
@@ -300,35 +284,6 @@ private fun isValidDate(date: String): Boolean {
         true
     } catch (e: Exception) {
         false
-    }
-}
-
-// Date transformation for input formatting
-private class DateTransformation : VisualTransformation {
-    override fun filter(text: AnnotatedString): TransformedText {
-        val trimmed = if (text.text.length >= 8) text.text.substring(0..7) else text.text
-        var out = ""
-        for (i in trimmed.indices) {
-            out += trimmed[i]
-            if (i == 3 || i == 5) out += "-"
-        }
-
-        val numberOffsetTranslator = object : OffsetMapping {
-            override fun originalToTransformed(offset: Int): Int {
-                if (offset <= 3) return offset
-                if (offset <= 5) return offset + 1
-                if (offset <= 7) return offset + 2
-                return 10
-            }
-
-            override fun transformedToOriginal(offset: Int): Int {
-                if (offset <= 4) return offset
-                if (offset <= 7) return offset - 1
-                return 7
-            }
-        }
-
-        return TransformedText(AnnotatedString(out), numberOffsetTranslator)
     }
 }
 
@@ -352,55 +307,52 @@ fun PatientInfo(patient: PatientResponse) {
     }
 }
 
+
 @Composable
-private fun PatientDetails(patient: PatientResponse) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(4.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(
-                text = patient.full_name,
-                style = MaterialTheme.typography.headlineSmall
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("ID: ${patient.patient_id}")
-            Text("National ID: ${patient.national_id}")
-            Text("DOB: ${patient.date_of_birth}")
-            patient.blood_type?.let { 
-                Text("Blood Type: $it") 
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            if (patient.enrolled_programs.isNotEmpty()) {
-                Text(
-                    text = "Enrolled Programs:",
-                    style = MaterialTheme.typography.titleMedium
-                )
-                patient.enrolled_programs.forEach { programId ->
-                    Text("- $programId")
-                }
-            }
-        }
-    }
+fun AppOutlinedTextField(
+    modifier: Modifier = Modifier,
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    isError: Boolean = false,
+    supportingText: @Composable (() -> Unit)? = null,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    singleLine: Boolean = true,
+    trailingIcon: @Composable (() -> Unit)? = null,
+    leadingIcon: @Composable (() -> Unit)? = null,
+    maxLines: Int = 1,
+){
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        isError = isError,
+        supportingText = supportingText,
+        modifier = modifier,
+        keyboardOptions = keyboardOptions,
+        visualTransformation = visualTransformation,
+        singleLine = singleLine,
+        trailingIcon = trailingIcon,
+        leadingIcon = leadingIcon,
+        maxLines = maxLines
+    )
+
 }
 
 @Composable
-private fun ErrorMessage(message: String, onRetry: () -> Unit) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
+fun AppButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled
     ) {
-        Text(
-            text = "Error: $message",
-            color = MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.bodyMedium
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = onRetry) {
-            Text("Retry")
-        }
+        Text(text)
     }
 }
+

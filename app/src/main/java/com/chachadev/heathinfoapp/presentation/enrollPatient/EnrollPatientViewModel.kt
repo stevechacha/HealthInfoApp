@@ -16,47 +16,60 @@ class EnrollPatientViewModel(
     private val healthRepository: HealthcareRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<EnrollUiState>(EnrollUiState.Loading)
+    private val _uiState = MutableStateFlow(EnrollUiState())
     val uiState: StateFlow<EnrollUiState> = _uiState
 
     init {
-        loadInitialData()
+        loadAllPatients()
+        loadPrograms()
+    }
+
+    fun loadInitialData(){
+        loadPrograms()
+        loadAllPatients()
     }
 
 
-
-    fun loadInitialData() {
+    private fun loadPrograms(refresh: Boolean = false) {
         viewModelScope.launch {
-            _uiState.value = EnrollUiState.Loading
-
-            val patientsResult = healthRepository.getPatients().first()
-            val programsResult = healthRepository.getPrograms().first()
-
-            println(patientsResult)
-            println(programsResult)
-
-            when {
-                patientsResult is Resource.Error -> {
-                    _uiState.value = EnrollUiState.Error(
-                        patientsResult.message ?: "Failed to load patients"
-                    )
+            _uiState.update { it.copy(isLoading = false) }
+            try {
+                healthRepository.getPrograms(refresh).collect { resource ->
+                    when (resource) {
+                        is Resource.Success -> {
+                            _uiState.update { it.copy(isLoading = false, programs = resource.data) }
+                        }
+                        is Resource.Error -> {
+                            _uiState.update { it.copy(isLoading = false, errorMessage = "Programs Error Message ${resource.message}") }
+                        }
+                        is Resource.Loading -> {
+                            _uiState.update { it.copy(isLoading = true) }
+                        }
+                    }
                 }
-                programsResult is Resource.Error -> {
-                    _uiState.value = EnrollUiState.Error(
-                        programsResult.message ?: "Failed to load programs"
-                    )
-                }
-                programsResult is Resource.Loading ->{
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, errorMessage = e.message ?: "Failed to load programs") }
+            }
+        }
+    }
 
-                }
-                patientsResult is Resource.Loading ->{
 
-                }
-                else -> {
-                    _uiState.value = EnrollUiState.Success(
-                        patients = (patientsResult as Resource.Success).data ?: emptyList(),
-                        programs = (programsResult as Resource.Success).data ?: emptyList()
-                    )
+    private fun loadAllPatients(refresh: Boolean = false) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = false, isRefreshing = true) }
+            healthRepository.getPatients(refresh).collect { result ->
+                when(result){
+                    is Resource.Error -> {
+                        _uiState.update { it.copy(isLoading = false, errorMessage = result.message) }
+
+                    }
+                    is Resource.Loading-> {
+                        _uiState.update { it.copy(isLoading = true) }
+                    }
+                    is Resource.Success -> {
+                        _uiState.update { it.copy(isLoading = false, patients = result.data, isRefreshing = false) }
+
+                    }
                 }
             }
         }
@@ -64,32 +77,20 @@ class EnrollPatientViewModel(
 
     fun enrollPatient(patientId: String, programId: String) {
         viewModelScope.launch {
-            _uiState.value = (_uiState.value as? EnrollUiState.Success)?.copy(
-                isLoading = true
-            ) ?: return@launch
-
+            _uiState.update { it.copy(isLoading = true) }
             healthRepository.enrollPatient(patientId, programId)
                 .collect { response ->
                     when (response) {
                         is Resource.Success -> {
-                            _uiState.value = EnrollUiState.Success(
-                                patients = (_uiState.value as? EnrollUiState.Success)?.patients ?: emptyList(),
-                                programs = (_uiState.value as? EnrollUiState.Success)?.programs ?: emptyList(),
-                                enrolledPatient = response.data,
-                                isLoading = false
-                            )
+                            _uiState.update { it.copy(isLoading = false, isRefreshing = false, enrolledPatient = response.data) }
                         }
                         is Resource.Error -> {
-                            _uiState.value = (_uiState.value as? EnrollUiState.Success)?.copy(
-                                isLoading = false,
-                                errorMessage = response.message
-                            ) ?: return@collect
+                            _uiState.update { it.copy(isLoading = false, isRefreshing = false, errorMessage = response.message) }
+
                         }
 
                         is Resource.Loading<*> -> {
-                            _uiState.value = (_uiState.value as? EnrollUiState.Success)?.copy(
-                                isLoading = true
-                            ) ?: return@collect
+                            _uiState.update { it.copy(isLoading = true) }
                         }
                     }
                 }

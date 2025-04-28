@@ -36,6 +36,8 @@ import androidx.compose.ui.unit.dp
 import com.chachadev.heathinfoapp.data.network.reponses.PatientResponse
 import com.chachadev.heathinfoapp.data.network.reponses.ProgramResponse
 import com.chachadev.heathinfoapp.domain.entity.Resource
+import com.chachadev.heathinfoapp.presentation.common.composables.CenterLoadingIndicator
+import com.chachadev.heathinfoapp.presentation.enrollPatient.component.DropdownSelector
 import com.chachadev.heathinfoapp.presentation.patientList.ErrorState
 import org.koin.androidx.compose.koinViewModel
 
@@ -52,11 +54,11 @@ fun EnrollPatientScreen(
 
     // Handle enrollment success
     LaunchedEffect(uiState) {
-        if (uiState is EnrollUiState.Success && (uiState as EnrollUiState.Success).enrolledPatient != null) {
-            onEnrollmentSuccess((uiState as EnrollUiState.Success).enrolledPatient!!)
-            selectedPatientId = null
-            selectedProgramId = null
-        }
+//        if (uiState is EnrollUiState.Success && (uiState as EnrollUiState.Success).enrolledPatient != null) {
+//            onEnrollmentSuccess((uiState as EnrollUiState.Success).enrolledPatient!!)
+//            selectedPatientId = null
+//            selectedProgramId = null
+//        }
     }
 
     Scaffold(
@@ -71,28 +73,28 @@ fun EnrollPatientScreen(
             )
         }
     ) { padding ->
-        when (val state = uiState) {
-            is EnrollUiState.Loading -> CircularProgressIndicator()
-            is EnrollUiState.Error -> ErrorState(
-                message = state.message,
+        if (uiState.isLoading){
+            CenterLoadingIndicator()
+        } else if (uiState.errorMessage!=null){
+            ErrorState(
+                message = uiState.errorMessage!!,
                 onRetry = { viewModel.loadInitialData() }
             )
-            is EnrollUiState.Success -> {
-                EnrollmentForm(
-                    patients = state.patients,
-                    programs = state.programs,
-                    isLoading = state.isLoading,
-                    errorMessage = state.errorMessage,
-                    selectedPatientId = selectedPatientId,
-                    selectedProgramId = selectedProgramId,
-                    onPatientSelected = { selectedPatientId = it },
-                    onProgramSelected = { selectedProgramId = it },
-                    onEnrollClick = { patientId, programId ->
-                        viewModel.enrollPatient(patientId, programId)
-                    },
-                    modifier = Modifier.padding(padding)
-                )
-            }
+        } else {
+            EnrollmentForm(
+                patients = uiState.patients?: emptyList(),
+                programs = uiState.programs?: emptyList(),
+                isLoading = uiState.isLoading,
+                errorMessage = uiState.errorMessage,
+                selectedPatientId = selectedPatientId,
+                selectedProgramId = selectedProgramId,
+                onPatientSelected = { selectedPatientId = it },
+                onProgramSelected = { selectedProgramId = it },
+                onEnrollClick = { patientId, programId ->
+                    viewModel.enrollPatient(patientId, programId)
+                },
+                modifier = Modifier.padding(padding)
+            )
         }
     }
 }
@@ -173,77 +175,6 @@ private fun EnrollmentForm(
             } else {
                 Text("Enroll Patient")
             }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun <T> DropdownSelector(
-    label: String,
-    items: List<T>,
-    selectedItem: T?,
-    expanded: Boolean,
-    onExpandedChange: (Boolean) -> Unit,
-    itemToString: (T) -> String,
-    onItemSelected: (T) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { onExpandedChange(it) },
-        modifier = modifier
-    ) {
-        OutlinedTextField(
-            modifier = Modifier
-                .fillMaxWidth()
-                .menuAnchor(),
-            readOnly = true,
-            value = selectedItem?.let { itemToString(it) } ?: "",
-            onValueChange = {},
-            label = { Text("$label*") },
-            trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-            },
-            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-            isError = items.isEmpty()
-        )
-
-        if (items.isNotEmpty()) {
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { onExpandedChange(false) }
-            ) {
-                items.forEach { item ->
-                    DropdownMenuItem(
-                        text = { Text(itemToString(item)) },
-                        onClick = {
-                            onItemSelected(item)
-                            onExpandedChange(false)
-                        }
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ErrorMessage(message: String, onRetry: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = message,
-            color = MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.bodyMedium
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = onRetry) {
-            Text("Retry")
         }
     }
 }

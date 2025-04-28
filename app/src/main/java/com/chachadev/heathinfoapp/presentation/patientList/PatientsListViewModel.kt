@@ -7,23 +7,16 @@ import com.chachadev.heathinfoapp.data.repo.HealthcareRepository
 import com.chachadev.heathinfoapp.domain.entity.Resource
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
 
 class PatientsListViewModel(
     private val repository: HealthcareRepository
 ) : ViewModel() {
 
-    // State for all patients
-    private val _patientsState = MutableStateFlow<Resource<List<PatientResponse>>>(Resource.Loading())
-    val patientsState: StateFlow<Resource<List<PatientResponse>>> = _patientsState
-
-    // Search query
-    private val _searchQuery = MutableStateFlow("")
-    val searchQuery: StateFlow<String> = _searchQuery
-
-    // Refresh state
-    private val _isRefreshing = MutableStateFlow(false)
-    val isRefreshing: StateFlow<Boolean> = _isRefreshing
+    private val _patientsState = MutableStateFlow(PatientListUiState())
+    val patientsState: StateFlow<PatientListUiState> = _patientsState
 
     init {
         loadAllPatients()
@@ -31,16 +24,43 @@ class PatientsListViewModel(
 
     private fun loadAllPatients(refresh: Boolean = false) {
         viewModelScope.launch {
-            _isRefreshing.value = true
+            _patientsState.update { it.copy(isLoading = true, isRefreshing = refresh) }
             repository.getPatients(refresh).collect { resource ->
-                _patientsState.value = resource
-                _isRefreshing.value = false
+                when(resource) {
+                    is Resource.Error -> {
+                        _patientsState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessage = resource.message,
+                                isRefreshing = false
+                            )
+                        }
+                    }
+                    is Resource.Success -> {
+                        _patientsState.update {
+                            it.copy(
+                                isLoading = false,
+                                patients = resource.data,
+                                isRefreshing = false,
+                                errorMessage = null
+                            )
+                        }
+                    }
+                    is Resource.Loading -> {
+                        _patientsState.update {
+                            it.copy(
+                                isLoading = true,
+                                isRefreshing = true
+                            )
+                        }
+                    }
+                }
             }
         }
     }
 
     fun updateSearchQuery(query: String) {
-        _searchQuery.value = query
+        _patientsState.update { it.copy(searchQuery = query) }
     }
 
     fun refresh() {

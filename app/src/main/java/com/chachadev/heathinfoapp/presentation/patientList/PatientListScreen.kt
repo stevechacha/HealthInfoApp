@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PeopleOutline
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material3.Button
@@ -58,28 +59,33 @@ fun PatientsListScreen(
     onPatientClick: (String) -> Unit
 ) {
     val patientsState by viewModel.patientsState.collectAsState()
-    val searchQuery by viewModel.searchQuery.collectAsState()
-    val isRefreshing by viewModel.isRefreshing.collectAsState()
     val refreshState = rememberPullToRefreshState()
 
     // Filter patients based on search query
-    val filteredPatients = remember(patientsState.data, searchQuery) {
-        when (patientsState) {
-            is Resource.Success -> {
-                patientsState.data?.filter { patient ->
-                    patient.full_name.contains(searchQuery, ignoreCase = true) ||
-                            patient.national_id.contains(searchQuery, ignoreCase = true) ||
-                            patient.patient_id.contains(searchQuery, ignoreCase = true)
-                } ?: emptyList()
-            }
-            else -> emptyList()
+    val filteredPatients = remember(patientsState.patients, patientsState.searchQuery) {
+        if (patientsState.searchQuery.isEmpty()) {
+            patientsState.patients ?: emptyList()
+        } else {
+            patientsState.patients?.filter { patient ->
+                patient.full_name.contains(patientsState.searchQuery, ignoreCase = true) ||
+                        patient.national_id.contains(patientsState.searchQuery, ignoreCase = true) ||
+                        patient.patient_id.contains(patientsState.searchQuery, ignoreCase = true)
+            } ?: emptyList()
+        }
+    }
+
+    // Handle pull-to-refresh
+    LaunchedEffect(refreshState.isAnimating) {
+        if (refreshState.isAnimating) {
+            viewModel.refresh()
+            refreshState.animateToHidden()
         }
     }
 
     Scaffold(
         topBar = {
             SearchAppBar(
-                query = searchQuery,
+                query = patientsState.searchQuery,
                 onQueryChange = viewModel::updateSearchQuery,
                 onSearch = { viewModel.updateSearchQuery(it) }
             )
@@ -89,47 +95,74 @@ fun PatientsListScreen(
             PullToRefreshBox(
                 state = refreshState,
                 modifier = Modifier.fillMaxSize(),
-                isRefreshing = true,
+                onRefresh = {
+                    viewModel.refresh()
+                },
+                contentAlignment = Alignment.Center,
                 indicator = {},
-                contentAlignment = Alignment.TopStart,
-                onRefresh = {},
+                isRefreshing = patientsState.isLoading,
             ) {
-                when (patientsState) {
-                    is Resource.Loading -> {
-                        if (filteredPatients.isEmpty()) {
-                            CenterLoadingIndicator()
-                        }
+                when {
+                    patientsState.isLoading && filteredPatients.isEmpty() -> {
+                        CenterLoadingIndicator()
                     }
-                    is Resource.Error -> {
+                    patientsState.errorMessage?.isNotEmpty() == true -> {
                         ErrorState(
-                            message = (patientsState as Resource.Error).message
-                                ?: "Error loading patients",
+                            message = patientsState.errorMessage!!,
                             onRetry = viewModel::refresh
                         )
                     }
-                    is Resource.Success -> {
-                        if (filteredPatients.isEmpty()) {
+                    filteredPatients.isEmpty() -> {
+                        if (patientsState.searchQuery.isNotEmpty()) {
                             EmptySearchState(
-                                searchQuery = searchQuery,
+                                searchQuery = patientsState.searchQuery,
                                 onClearSearch = { viewModel.updateSearchQuery("") }
                             )
                         } else {
-                            LazyColumn {
-                                items(
-                                    items = filteredPatients,
-                                    key = { it.patient_id }
-                                ) { patient ->
-                                    PatientListItem(
-                                        patient = patient,
-                                        onClick = { onPatientClick(patient.patient_id) }
-                                    )
-                                }
+                            // Show empty state for no patients at all
+                            EmptyState()
+                        }
+                    }
+                    else -> {
+                        LazyColumn {
+                            items(
+                                items = filteredPatients,
+                                key = { it.patient_id }
+                            ) { patient ->
+                                PatientListItem(
+                                    patient = patient,
+                                    onClick = { onPatientClick(patient.patient_id) }
+                                )
                             }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+// Add this new composable for empty state when there are no patients
+@Composable
+private fun EmptyState() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.PeopleOutline,
+            contentDescription = "No patients",
+            modifier = Modifier.size(48.dp),
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "No patients found",
+            style = MaterialTheme.typography.titleMedium
+        )
     }
 }
 

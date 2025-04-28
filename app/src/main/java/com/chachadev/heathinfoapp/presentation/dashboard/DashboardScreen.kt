@@ -29,7 +29,6 @@ import kotlinx.coroutines.launch
 
 
 @RequiresApi(Build.VERSION_CODES.O)
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     onNavigate: (Destination, Boolean) -> Unit,
