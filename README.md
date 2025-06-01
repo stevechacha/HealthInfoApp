@@ -58,7 +58,7 @@ graph TD
 - **State Management**: Kotlin Flows, StateFlow
 - **Navigation**: Compose Navigation
 
-## Getting Started
+## How to Get Started
 
 ### Prerequisites
 - Android Studio Giraffe (2022.3.1) or later
