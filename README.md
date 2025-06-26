@@ -2,7 +2,7 @@
 # HealthInfoApp
 
 
-A modern Android application for managing patients, healthcare programs, and enrollments, built with Jetpack Compose and following modern Android development best practices.
+A modern Android application for managing patients, healthcare programs, and enrollments, built with Jetpack Compose and following modern Android development better practices.
 
 ## Features
 
